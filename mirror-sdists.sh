@@ -33,7 +33,7 @@ setup() {
 
 setup
 
-pip install -U python-pypi-mirror toml pyproject_hooks packaging wheel
+pip install -U python-pypi-mirror toml pyproject_hooks packaging wheel setuptools
 
 add_to_build_order() {
   local type="$1"; shift
