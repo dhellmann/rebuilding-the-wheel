@@ -104,6 +104,8 @@ collect_build_requires() {
         # If the package has no dependencies, the file is not created.
         requires_file="$(ls $(dirname ${pyproject_toml})/*.egg-info/requires.txt || true)"
         if [ -f "${requires_file}" ]; then
+            # Ignore blank lines and "extras" section headers in the requires.txt file
+            # to process all dependencies, including optional ones.
             grep -v -e '^\[' -e '^$' "${requires_file}" \
                 | while read -r req_iter; do
                 download_output=${TMP}/download-$(${parse_script} "${req_iter}").log
