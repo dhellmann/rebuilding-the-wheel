@@ -97,16 +97,38 @@ collect_build_requires() {
         fi
     done
 
-    (cd $(dirname $pyproject_toml) && $PYTHON $extract_script < pyproject.toml) | while read -r req_iter; do
-        download_output=${TMP}/download-$(${parse_script} "${req_iter}").log
-        download_sdist "${req_iter}" | tee $download_output
-        local req_sdist=$(get_downloaded_sdist $download_output)
-      if [ -n "${req_sdist}" ]; then
-        collect_build_requires "${req_sdist}"
+    setuppy=$(dirname $pyproject_toml)/setup.py
+    if [ -f "${setuppy}" ]; then
+        # Use egg_info to get the dependencies
+        (cd $(dirname $pyproject_toml) && $PYTHON setup.py egg_info)
+        # If the package has no dependencies, the file is not created.
+        requires_file="$(ls $(dirname ${pyproject_toml})/*.egg-info/requires.txt || true)"
+        if [ -f "${requires_file}" ]; then
+            grep -v -e '^\[' -e '^$' "${requires_file}" \
+                | while read -r req_iter; do
+                download_output=${TMP}/download-$(${parse_script} "${req_iter}").log
+                download_sdist "${req_iter}" | tee $download_output
+                local req_sdist=$(get_downloaded_sdist $download_output)
+                if [ -f "${req_sdist}" ]; then
+                    collect_build_requires "${req_sdist}"
+                    add_to_build_order "dependency" "${req_iter}"
+                fi
+            done
+        fi
 
-        add_to_build_order "dependency" "${req_iter}"
-      fi
-    done
+    else
+        # Get the dependencies from the pyproject.toml directly
+        (cd $(dirname $pyproject_toml) && $PYTHON $extract_script < pyproject.toml) | while read -r req_iter; do
+            download_output=${TMP}/download-$(${parse_script} "${req_iter}").log
+            download_sdist "${req_iter}" | tee $download_output
+            local req_sdist=$(get_downloaded_sdist $download_output)
+            if [ -n "${req_sdist}" ]; then
+                collect_build_requires "${req_sdist}"
+                add_to_build_order "dependency" "${req_iter}"
+            fi
+        done
+
+    fi
   fi
 
   rm -rf $tmp_unpack_dir
