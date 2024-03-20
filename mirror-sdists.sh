@@ -35,6 +35,12 @@ setup
 
 pip install -U python-pypi-mirror toml pyproject_hooks packaging wheel setuptools
 
+# Handle some common packaging tools as special cases by
+# pre-installing them. This avoids circular dependencies between the
+# packaging tool and *its* dependencies, which might be packaged with
+# that tool.
+pip install hatchling
+
 add_to_build_order() {
   local type="$1"; shift
   local req="$1"; shift
