@@ -75,30 +75,26 @@ collect_build_requires() {
         download_output=${TMP}/download-$(${parse_script} "${req_iter}").log
         download_sdist "${req_iter}" | tee $download_output
         local req_sdist=$(get_downloaded_sdist $download_output)
-      if [ -n "${req_sdist}" ]; then
-        collect_build_requires "${req_sdist}"
-
-        add_to_build_order "build_system" "${req_iter}"
-
-        # Build backend hooks usually may build requires installed
-        pip install -U "${req_iter}"
-      fi
+        if [ -n "${req_sdist}" ]; then
+            collect_build_requires "${req_sdist}"
+            add_to_build_order "build_system" "${req_iter}"
+            # Build backend hooks usually may build requires installed
+            pip install -U "${req_iter}"
+        fi
     done
 
     (cd $(dirname $pyproject_toml) && $PYTHON $extract_script --build-backend < pyproject.toml) | while read -r req_iter; do
         download_output=${TMP}/download-$(${parse_script} "${req_iter}").log
         download_sdist "${req_iter}" | tee $download_output
         local req_sdist=$(get_downloaded_sdist $download_output)
-      if [ -n "${req_sdist}" ]; then
-        collect_build_requires "${req_sdist}"
-
-        add_to_build_order "build_backend" "${req_iter}"
-
-        # Build backends are often used to package themselves, so in
-        # order to determine their dependencies they may need to be
-        # installed.
-        pip install -U "${req_iter}"
-      fi
+        if [ -n "${req_sdist}" ]; then
+            collect_build_requires "${req_sdist}"
+            add_to_build_order "build_backend" "${req_iter}"
+            # Build backends are often used to package themselves, so in
+            # order to determine their dependencies they may need to be
+            # installed.
+            pip install -U "${req_iter}"
+        fi
     done
 
     (cd $(dirname $pyproject_toml) && $PYTHON $extract_script < pyproject.toml) | while read -r req_iter; do
