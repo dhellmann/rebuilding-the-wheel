@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 
 class WorkContext:
 
-    def __init__(self, sdists_repo, wheels_repo, work_dir, wheel_server_port):
+    def __init__(self, allowed_dists, sdists_repo, wheels_repo, work_dir, wheel_server_port):
+        self._allowed_dists = allowed_dists
         self.sdists_repo = pathlib.Path(sdists_repo)
         self.sdists_downloads = self.sdists_repo / 'downloads'
         self.wheels_repo = pathlib.Path(wheels_repo)
@@ -31,6 +32,9 @@ class WorkContext:
         # than the package, in case we do have multiple rules for the same
         # package.
         self._seen_requirements = set()
+
+    def dist_is_allowed(self, dist_name):
+        return dist_name in self._allowed_dists
 
     def mark_as_seen(self, sdist_id):
         logger.debug('remembering seen sdist %s', sdist_id)

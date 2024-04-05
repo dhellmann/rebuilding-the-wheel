@@ -21,6 +21,7 @@ def main():
     parser.add_argument('-w', '--wheels-repo', default='wheels-repo')
     parser.add_argument('-t', '--work-dir', default=os.environ.get('WORK_DIR', 'work-dir'))
     parser.add_argument('--wheel-server-port', default=0, type=int)
+    parser.add_argument('--allowed-dists', default='allowed_dists.txt')
     args = parser.parse_args(sys.argv[1:])
 
     logging.basicConfig(
@@ -28,7 +29,17 @@ def main():
         format=VERBOSE_LOG_FMT if args.verbose else TERSE_LOG_FMT,
     )
 
+    allowed_dists_file = pathlib.Path(args.allowed_dists)
+    if not allowed_dists_file.exists():
+        raise RuntimeError(f'No such file {allowed_dists_file}')
+    allowed_dists = set(
+        d.strip()
+        for d in
+        allowed_dists_file.read_text().splitlines()
+    )
+
     ctx = context.WorkContext(
+        allowed_dists=allowed_dists,
         sdists_repo=args.sdists_repo,
         wheels_repo=args.wheels_repo,
         work_dir=args.work_dir,
